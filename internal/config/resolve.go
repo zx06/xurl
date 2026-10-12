@@ -87,10 +87,15 @@ func Resolve(opts Options) (Resolved, *errors.XError) {
 		format = cfg.Format
 	}
 
+	libDir := resolveLibraryDir(cfg, opts.HomeDir, workDir)
+	histPath := resolveHistoryPath(opts.HomeDir)
+
 	return Resolved{
 		ConfigPath:  cfgPath,
 		ProfileName: profile,
 		Format:      format,
+		LibraryDir:  libDir,
+		HistoryPath: histPath,
 		Profile:     selected,
 		AllProfiles: resolvedProfiles,
 	}, nil

@@ -1,8 +1,9 @@
 package config
 
 type File struct {
-	Format   string             `yaml:"format"`
-	Profiles map[string]Profile `yaml:"profiles"`
+	Format     string             `yaml:"format"`
+	LibraryDir string             `yaml:"library_dir"`
+	Profiles   map[string]Profile `yaml:"profiles"`
 }
 
 type Profile struct {
@@ -35,6 +36,8 @@ type Resolved struct {
 	ConfigPath  string
 	ProfileName string
 	Format      string
+	LibraryDir  string
+	HistoryPath string
 	Profile     Profile
 	AllProfiles map[string]Profile
 }

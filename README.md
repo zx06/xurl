@@ -22,32 +22,28 @@ Requires **Go 1.22+**.
    cp examples/xurl.yaml.example ~/.config/xurl/xurl.yaml
    ```
 
-   Edit `profiles.httpbin.vars.host` if needed. For real secrets, store a token in your OS keyring and reference it:
-
-   ```bash
-   # Linux (secret-service); macOS Keychain; Windows Credential Manager
-   # Service/account must match keyring:service/user in YAML
-   ```
-
-   Example profile snippet:
-
-   ```yaml
-   profiles:
-     httpbin:
-       base_url: https://httpbin.org
-       allow_plaintext: false
-       vars:
-         host: https://httpbin.org
-       auth:
-         bearer: keyring:xurl/demo-token
-   ```
-
-   For local dev only, set `allow_plaintext: true` and use plaintext tokens in YAML.
+   The bundled `httpbin` profile needs no secrets. For authenticated APIs, reference the OS keyring as `keyring:service/user` (see `examples/xurl.yaml.example` comments). Plaintext secrets in YAML require `allow_plaintext: true` on that profile.
 
 2. **Run a named request**
 
    ```bash
    xurl run examples/example.http health -p httpbin -f json
+   ```
+
+   **Library** (managed `.http` files under `~/.config/xurl/library` by default):
+
+   ```bash
+   xurl lib path
+   xurl lib add examples/example.http
+   xurl run example.http health -p httpbin -f json   # resolves in library if not a local path
+   ```
+
+   **History** (stored in `~/.local/share/xurl/history.json`):
+
+   ```bash
+   xurl history list -f json
+   xurl history run 1          # re-run by index (1 = most recent)
+   xurl run --last             # shortcut for most recent entry
    ```
 
    Output shape:
@@ -73,7 +69,9 @@ Requires **Go 1.22+**.
 
 | Command | Description |
 |--------|-------------|
-| `xurl run <file.http> [request-name]` | Run one request (`### name` blocks in multi-request files) |
+| `xurl run <target> [request-name]` | Run one request (filesystem path or library name; `--last` re-runs history) |
+| `xurl lib path` / `lib list` / `lib add <file>` | Managed library directory (`library_dir` in config) |
+| `xurl history list` / `history run <index>` | Run history (newest = index 1) |
 | `xurl profile list` | List profiles |
 | `xurl profile show <name>` | Show profile (secrets masked) |
 
@@ -85,6 +83,11 @@ Global flags:
 - `--attr key=value` — extra `{{var}}` bindings (repeatable)
 
 Priority: **CLI > ENV > config file**.
+
+Config keys:
+
+- `library_dir` — default `~/.config/xurl/library` (created on first use)
+- History file path is fixed at `~/.local/share/xurl/history.json` (or `$XDG_DATA_HOME/xurl/history.json`), max 100 entries
 
 ## `.http` file format (subset)
 

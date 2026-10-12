@@ -66,8 +66,11 @@ func NewRootCommand() *cobra.Command {
 	root.PersistentFlags().StringVarP(&global.FormatStr, "format", "f", "json", "Output format: json|table")
 	root.PersistentFlags().StringArrayVar(&cliAttrs, "attr", nil, "Variable key=value (repeatable)")
 
-	root.AddCommand(NewRunCommand(output.New(os.Stdout, os.Stderr)))
-	root.AddCommand(NewProfileCommand(output.New(os.Stdout, os.Stderr)))
+	out := output.New(os.Stdout, os.Stderr)
+	root.AddCommand(NewRunCommand(out))
+	root.AddCommand(NewProfileCommand(out))
+	root.AddCommand(NewLibCommand(out))
+	root.AddCommand(NewHistoryCommand(out))
 
 	return root
 }

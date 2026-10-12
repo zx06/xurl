@@ -1,5 +1,8 @@
 format: json
 
+# Managed .http files live here (created on first use). Run by name: xurl run ping -p ...
+# library_dir: ~/.config/xurl/library
+
 profiles:
   httpbin:
     description: Public HTTP echo service (demo)

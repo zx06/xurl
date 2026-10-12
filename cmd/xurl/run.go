@@ -1,59 +1,72 @@
 package main
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 	"github.com/zx06/xurl/internal/errors"
-	"github.com/zx06/xurl/internal/httpfile"
+	"github.com/zx06/xurl/internal/history"
 	"github.com/zx06/xurl/internal/output"
-	"github.com/zx06/xurl/internal/runner"
 )
 
 func NewRunCommand(w output.Writer) *cobra.Command {
-	return &cobra.Command{
-		Use:   "run <file.http> [request-name]",
-		Short: "Execute HTTP request(s) from a .http file",
-		Args:  cobra.RangeArgs(1, 2),
+	var runLast bool
+
+	cmd := &cobra.Command{
+		Use:   "run <target> [request-name]",
+		Short: "Execute HTTP request(s) from a .http file (path or library name)",
+		Args: func(cmd *cobra.Command, args []string) error {
+			last, _ := cmd.Flags().GetBool("last")
+			if last {
+				return nil
+			}
+			if len(args) < 1 {
+				return errors.New(errors.CodeHTTPFile, "target required (or use --last)", nil)
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			format, xe := parseOutputFormat(global.FormatStr)
 			if xe != nil {
 				return xe
 			}
+
+			if runLast {
+				store := history.NewStore(global.Resolved.HistoryPath)
+				entry, xe := store.Latest()
+				if xe != nil {
+					return xe
+				}
+				prof, xe := profileForRun(entry.Profile)
+				if xe != nil {
+					return xe
+				}
+				return executeRun(w, format, runParams{
+					Target:      entry.Path,
+					RequestName: entry.RequestName,
+					ProfileName: entry.Profile,
+					Profile:     prof,
+					RecordHist:  true,
+				})
+			}
+
 			if global.ProfileStr == "" {
 				return errors.New(errors.CodeCfgInvalid, "profile is required; use -p/--profile or XURL_PROFILE", nil)
 			}
 
-			path := args[0]
 			reqName := ""
-			if len(args) == 2 {
+			if len(args) >= 2 {
 				reqName = args[1]
 			}
 
-			b, err := os.ReadFile(path)
-			if err != nil {
-				return errors.Wrap(errors.CodeHTTPFile, "failed to read HTTP file", map[string]any{"path": path}, err)
-			}
-
-			requests, xe := httpfile.Parse(b)
-			if xe != nil {
-				return xe
-			}
-
-			req, ok := httpfile.FindByName(requests, reqName)
-			if !ok {
-				if reqName == "" {
-					return errors.New(errors.CodeHTTPFile, "file contains multiple requests; specify a request name", map[string]any{"count": len(requests)})
-				}
-				return errors.New(errors.CodeHTTPFile, "request not found", map[string]any{"name": reqName})
-			}
-
-			result := runner.Run(req, runner.Options{
-				Profile: global.Resolved.Profile,
-				Attrs:   global.Attrs,
+			return executeRun(w, format, runParams{
+				Target:      args[0],
+				RequestName: reqName,
+				ProfileName: global.ProfileStr,
+				Profile:     global.Resolved.Profile,
+				RecordHist:  true,
 			})
-
-			return w.WriteRunResult(format, result)
 		},
 	}
+
+	cmd.Flags().BoolVar(&runLast, "last", false, "Re-run the most recent history entry (uses stored profile)")
+	return cmd
 }
