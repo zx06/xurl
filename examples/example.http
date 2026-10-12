@@ -1,0 +1,11 @@
+### health
+GET {{host}}/get
+Accept: application/json
+
+### post-json
+POST {{host}}/post
+Content-Type: application/json
+
+{
+  "message": "hello from xurl"
+}
