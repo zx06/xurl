@@ -1,0 +1,24 @@
+format: json
+
+# Managed .http files live here (created on first use). Run by name: xurl run ping -p ...
+# library_dir: ~/.config/xurl/library
+
+profiles:
+  httpbin:
+    description: Public HTTP echo service (demo)
+    base_url: https://httpbin.org
+    allow_plaintext: false
+    vars:
+      host: https://httpbin.org
+    headers:
+      User-Agent: xurl/0.1
+    # Optional: store token in OS keyring, then uncomment:
+    # auth:
+    #   bearer: keyring:xurl/demo-token
+
+  local:
+    description: Local dev with plaintext token (dev only)
+    base_url: http://127.0.0.1:8080
+    allow_plaintext: true
+    vars:
+      host: http://127.0.0.1:8080
